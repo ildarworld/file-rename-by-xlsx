@@ -1,0 +1,7 @@
+
+*.jpeg
+*.png
+*.jpg
+*.sum
+*.xlsx
+rename.app/Contents/MacOS/*
