@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -38,13 +37,14 @@ func main() {
 	exectable, _ := os.Executable()
 	_path := filepath.Dir(exectable)
 
-	xlsx_file_path := ""
+	xlsx_file_path := _path
 
 	if _path == "MacOS" {
 		xlsx_file_path = filepath.Dir(filepath.Dir(filepath.Dir(_path)))
 	}
 
-	xlsx_file_name := path.Join(xlsx_file_path, "таблица соответствия.xlsx")
+	xlsx_file_name := path.Join(xlsx_file_path, "ссылки.xlsx")
+	fmt.Println("Excel file: " + xlsx_file_name)
 	f, err := excelize.OpenFile(xlsx_file_name)
 	if err != nil {
 		fmt.Println(err)
@@ -72,14 +72,22 @@ func main() {
 		mapping[original_filename] = filename
 	}
 
+	var errors []string
 	for filename, new_filename := range mapping {
 
 		ext := getFileExtension(filename)
-		new_filename = new_filename + "." + ext
-		err := os.Rename(filename, new_filename)
+		new_filename = path.Join(xlsx_file_path, new_filename+"."+ext)
+		err := os.Rename(path.Join(xlsx_file_path, filename), new_filename)
 		if err != nil {
-			log.Fatal(err)
+			errors = append(errors, filename+"\t"+err.Error())
 		}
 	}
-
+	if len(errors) > 0 {
+		fmt.Println("Ошибки ниже")
+		for _, err := range errors {
+			fmt.Println(err)
+		}
+	} else {
+		fmt.Println("Ошибок нет")
+	}
 }
