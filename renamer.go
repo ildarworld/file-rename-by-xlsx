@@ -73,9 +73,22 @@ func main() {
 	}
 
 	var errors []string
+	existing_files := make(map[string]int)
+
 	for filename, new_filename := range mapping {
 
+		if val, ok := existing_files[new_filename]; ok {
+
+			existing_files[new_filename] = val + 1
+			new_filename = fmt.Sprintf("%s_%d", new_filename, val)
+
+		} else {
+			existing_files[new_filename] = 1
+		}
+
 		ext := getFileExtension(filename)
+		fmt.Printf("Переименование файла: %s -> %s\n", filename, new_filename)
+
 		new_filename = path.Join(xlsx_file_path, new_filename+"."+ext)
 		err := os.Rename(path.Join(xlsx_file_path, filename), new_filename)
 		if err != nil {
