@@ -33,6 +33,18 @@ func getFileExtension(filename string) string {
 func main() {
 	const URL_HEADER = "Ссылки"
 	const FILE_NAME_FIELD = "Артикул"
+	const XLSX_FILE_NAME = "ссылки.xlsx"
+
+	is_wb := false
+	fmt.Print("Если нужно переименовать файлы для  Wildberries введите 'W'.\n Или просто нажмите на Enter: ")
+	var input string
+	fmt.Scanln(&input)
+	fmt.Print(input)
+
+	if strings.ToUpper(input) == "W" {
+		is_wb = true
+		fmt.Println("\nПереименовываем файлы под требования Wildberries:")
+	}
 
 	exectable, _ := os.Executable()
 	_path := filepath.Dir(exectable)
@@ -43,7 +55,7 @@ func main() {
 		xlsx_file_path = filepath.Dir(filepath.Dir(filepath.Dir(_path)))
 	}
 
-	xlsx_file_name := path.Join(xlsx_file_path, "ссылки.xlsx")
+	xlsx_file_name := path.Join(xlsx_file_path, XLSX_FILE_NAME)
 	fmt.Println("Excel file: " + xlsx_file_name)
 	f, err := excelize.OpenFile(xlsx_file_name)
 	if err != nil {
@@ -77,20 +89,27 @@ func main() {
 
 	for filename, new_filename := range mapping {
 
-		if val, ok := existing_files[new_filename]; ok {
+		ext := getFileExtension(filename)
+		old_filename := path.Join(xlsx_file_path, filename)
+		new_filename_path := ""
+		wb_file_path := ""
 
-			existing_files[new_filename] = val + 1
-			new_filename = fmt.Sprintf("%s_%d", new_filename, val)
-
-		} else {
-			existing_files[new_filename] = 1
+		if is_wb {
+			wb_file_path = new_filename
+			os.Mkdir(path.Join(xlsx_file_path, new_filename), 0755)
 		}
 
-		ext := getFileExtension(filename)
+		if val, ok := existing_files[new_filename]; ok {
+			existing_files[new_filename] = val + 1
+			new_filename_path = path.Join(xlsx_file_path, wb_file_path, fmt.Sprintf("%s_%d.%s", new_filename, val, ext))
+		} else {
+			existing_files[new_filename] = 1
+			new_filename_path = path.Join(xlsx_file_path, wb_file_path, fmt.Sprintf("%s.%s", new_filename, ext))
+		}
+
 		fmt.Printf("Переименование файла: %s -> %s\n", filename, new_filename)
 
-		new_filename = path.Join(xlsx_file_path, new_filename+"."+ext)
-		err := os.Rename(path.Join(xlsx_file_path, filename), new_filename)
+		err := os.Rename(old_filename, new_filename_path)
 		if err != nil {
 			errors = append(errors, filename+"\t"+err.Error())
 		}
