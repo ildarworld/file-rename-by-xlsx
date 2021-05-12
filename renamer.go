@@ -95,8 +95,8 @@ func main() {
 		wb_file_path := ""
 
 		if is_wb {
-			wb_file_path = new_filename
-			os.Mkdir(path.Join(xlsx_file_path, new_filename), 0755)
+			wb_file_path = path.Join(new_filename, "photo")
+			os.MkdirAll(path.Join(xlsx_file_path, wb_file_path), 0755)
 		}
 
 		if val, ok := existing_files[new_filename]; ok {
