@@ -30,6 +30,21 @@ func getFileExtension(filename string) string {
 	return s[len(s)-1]
 }
 
+func getFileLinks(rows [][]string, links_column_index int, filename_column_index int) map[string]string {
+	mapping := make(map[string]string)
+	for i := 1; i <= len(rows)-1; i++ {
+		link_list := strings.Split(rows[i][links_column_index], ";")
+		for j := 0; j < len(link_list); j++ {
+			link := link_list[j]
+			original_filename := getFileName(link)
+			filename := rows[i][filename_column_index]
+			fmt.Println(original_filename, "->", filename)
+			mapping[original_filename] = filename
+		}
+	}
+	return mapping
+}
+
 func main() {
 	const URL_HEADER = "Ссылки"
 	const FILE_NAME_FIELD = "Артикул"
@@ -72,17 +87,7 @@ func main() {
 	links_column_index := index(headers, URL_HEADER)
 	filename_column_index := index(headers, FILE_NAME_FIELD)
 
-	mapping := make(map[string]string)
-
-	for i := 1; i <= len(rows)-1; i++ {
-		link := rows[i][links_column_index]
-		original_filename := getFileName(link)
-
-		filename := rows[i][filename_column_index]
-		fmt.Println(original_filename, "\t")
-		fmt.Printf(filename)
-		mapping[original_filename] = filename
-	}
+	mapping := getFileLinks(rows, links_column_index, filename_column_index)
 
 	var errors []string
 	existing_files := make(map[string]int)
@@ -93,21 +98,23 @@ func main() {
 		old_filename := path.Join(xlsx_file_path, filename)
 		new_filename_path := ""
 		wb_file_path := ""
+		new_file_name := ""
 
 		if is_wb {
 			wb_file_path = path.Join(new_filename, "photo")
 			os.MkdirAll(path.Join(xlsx_file_path, wb_file_path), 0755)
 		}
-
 		if val, ok := existing_files[new_filename]; ok {
 			existing_files[new_filename] = val + 1
-			new_filename_path = path.Join(xlsx_file_path, wb_file_path, fmt.Sprintf("%s_%d.%s", new_filename, val, ext))
+			new_file_name = fmt.Sprintf("%s_%d.%s", new_filename, val, ext)
+			new_filename_path = path.Join(xlsx_file_path, wb_file_path, new_file_name)
 		} else {
 			existing_files[new_filename] = 1
+			new_file_name = fmt.Sprintf("%s.%s", new_filename, ext)
 			new_filename_path = path.Join(xlsx_file_path, wb_file_path, fmt.Sprintf("%s.%s", new_filename, ext))
 		}
 
-		fmt.Printf("Переименование файла: %s -> %s\n", filename, new_filename)
+		fmt.Printf("Переименование файла: %s -> %s\n", filename, new_file_name)
 
 		err := os.Rename(old_filename, new_filename_path)
 		if err != nil {
